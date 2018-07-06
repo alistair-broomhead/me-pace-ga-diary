@@ -1,6 +1,8 @@
 (ns me-pace-ga-diary.subs
   (:require [re-frame.core :refer [reg-sub]]))
 
+(println "Loading subs")
+
 (reg-sub
   :get-db
   (fn [db _] db))

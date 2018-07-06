@@ -1,9 +1,11 @@
 (ns me-pace-ga-diary.events
   (:require
-   [re-frame.core :refer [reg-event-db after]]
+   [re-frame.core :refer [reg-event-db reg-event-fx inject-cofx after dispatch]]
    [clojure.spec.alpha :as s]
-   [me-pace-ga-diary.db :as db :refer [app-db]]))
+   [me-pace-ga-diary.db :as db :refer [app-db]]
+   [me-pace-ga-diary.ui :as ui]))
 
+(println "Loading events")
 ;; -- Interceptors ------------------------------------------------------------
 ;;
 ;; See https://github.com/Day8/re-frame/blob/master/docs/Interceptors.md
@@ -22,14 +24,30 @@
 
 ;; -- Handlers --------------------------------------------------------------
 
-(reg-event-db
- :initialize-db
- validate-spec
- (fn [_ _]
-   app-db))
+(defn reg-db 
+  [name handler]
+  (reg-event-db name validate-spec (fn 
+    [db [event-name & rest]] 
+    (apply handler db rest))))
 
-(reg-event-db
- :set-greeting
- validate-spec
- (fn [db [_ value]]
-   (assoc db :greeting value)))
+(reg-db :initialize-db
+ (fn [db]
+  db/app-db))
+
+(reg-db :load-db
+ (fn [state]
+    (db/load state)
+    state))
+
+(reg-db :save-db
+ (fn [state]
+    (db/save! state)
+    state))
+
+(reg-db :store
+  (fn [old-state key value]
+    (assoc old-state key value)))
+
+(reg-db :store-all
+  (fn [old-state new-state]
+    (conj old-state new-state)))

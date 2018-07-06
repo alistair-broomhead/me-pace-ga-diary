@@ -1,49 +1,53 @@
 (ns me-pace-ga-diary.common
-    (:require [reagent.core :as r :refer [atom]]
-              [re-frame.core :refer [subscribe dispatch dispatch-sync]]
+    (:require [reagent.core :as r]
+              [re-frame.core :refer [dispatch 
+                                     dispatch-sync
+                                     subscribe]]
               [me-pace-ga-diary.events]
-              [me-pace-ga-diary.subs]))
-  
-  (def ReactNative (js/require "react-native"))
-  
-  (def app-registry (.-AppRegistry ReactNative))
-  (def text (r/adapt-react-class (.-Text ReactNative)))
-  (def view (r/adapt-react-class (.-View ReactNative)))
-  (def image (r/adapt-react-class (.-Image ReactNative)))
-  (def touchable-highlight (r/adapt-react-class (.-TouchableHighlight ReactNative)))
-  
-  (def styles {
-    :default {:font-size 16 :font-weight "100" :margin 20 :text-align "center"}
-    :heading {:font-size 30 :font-weight "100" :margin-top -20 :margin-bottom 20 :text-align "center"}
-    :footer {:font-size 16 :font-weight "100" :padding-top "auto" :height "auto" :text-align "center"}
+              [me-pace-ga-diary.subs]
+              [me-pace-ga-diary.ui :as ui]))
 
-  })
-  (def logo-img (js/require "./images/cljs.png"))
+(println "Loading common")
   
+(def ReactNative (js/require "react-native"))
 
-  (defn do-init [app-root]
-    (dispatch-sync [:initialize-db])
-    (.registerComponent app-registry "MePaceGaDiary" #(r/reactify-component app-root)))
-  
-  (defn get-root []
-    (let [db (subscribe [:get-db])]
-      (letfn [
-          (get-db [label] (label @db))
-          (create-text
-            ([string-input] (create-text string-input :default))
-            ([string-input style] [text {:style (style styles)} string-input])
-          )
-          (text-from-db 
-            ([text-label] (create-text (get-db text-label)))
-            ([text-label style-label] (create-text (get-db text-label) style-label)))
-        ]
-        (fn []
-          [view {:style {:flex-direction "column" :margin 40 :align-items "center"}}
-           (text-from-db :greeting :heading)
-           [image {
-              :source logo-img 
-              :style {:width 80 :height 80 :margin 10}}]
-           (text-from-db :ending :footer)
-          ]))))
-  
+(def logo-img (js/require "./images/cljs.png"))
+
+(defn do-init [app-root]
+  (let [app-registry (.-AppRegistry ReactNative)]
+  (dispatch-sync [:initialize-db])
+  (dispatch [:load-db])
+  (.registerComponent app-registry "MePaceGaDiary" #(r/reactify-component app-root))))
+
+(defn unwrap-value [handler]
+  (fn [value] (handler (-> value
+                          .-nativeEvent
+                          .-text))))
+
+(defn set-value 
+  ([key]          (unwrap-value #(dispatch [:store key %1])))
+  ([key & further](unwrap-value (fn [value] 
+                                  (dispatch [:store key value]) 
+                                  (dispatch (vec further))))))
+
+(let [db (subscribe [:get-db])]
+  (defn app-root
+    []
+    [ui/view (ui/styled :view-main)
+        [ui/h1 "Hai!"]
+        [ui/image (ui/styled :logo 
+                             :source logo-img)]
+        [ui/input {:style           {:width "100%"}
+                   :placeholder     "Key"
+                   :on-end-editing  (set-value :k)} (:k @db)]
+        [ui/input {:ref "value"
+                   :style           {:width "100%"}
+                   :placeholder     "Value"
+                   :on-end-editing  (set-value :v :save-db)} (:v @db)]
+        [ui/h2 ""]
+        
+        [ui/h3 "DB content:"]
+        [ui/p (js/JSON.stringify (clj->js @db))]
+    ]))
+
   
