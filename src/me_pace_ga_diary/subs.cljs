@@ -2,12 +2,18 @@
   (:require [re-frame.core :refer [reg-sub]]))
 
 (println "Loading subs")
+(letfn [(get-from
+          [prefix]
+          (fn
+            [state [_ & key-chain]]
+            (let [full  (into [prefix] key-chain)]
+              (println state prefix key-chain)
+              (get-in state full))
+            ))]
+  (reg-sub :get-from-db     (get-from :persist))
+  (reg-sub :get-from-cache  (get-from :cache)))
 
 (reg-sub
-  :get-db
-  (fn [db _] db))
+  :get-state
+  (fn [state _] state))
 
-(reg-sub
-  :get-greeting
-  (fn [db _]
-    (:greeting db)))

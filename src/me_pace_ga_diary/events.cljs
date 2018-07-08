@@ -24,10 +24,10 @@
 
 ;; -- Handlers --------------------------------------------------------------
 
-(defn reg-db 
+(defn reg-db
   [name handler]
-  (reg-event-db name validate-spec (fn 
-    [db [event-name & rest]] 
+  (reg-event-db name validate-spec (fn
+    [db [event-name & rest]]
     (apply handler db rest))))
 
 (reg-db :initialize-db
@@ -44,10 +44,19 @@
     (db/save! state)
     state))
 
+(defn to-key
+  [input']
+    (if (string? input')
+      (keyword input')
+      input'))
+
 (reg-db :store
-  (fn [old-state key value]
-    (assoc old-state key value)))
+  (fn [old-state key' value]
+    (let [key-chain (map to-key key')]
+        (println "storing" key-chain value "in" old-state)
+        (assoc-in old-state key-chain value))))
 
 (reg-db :store-all
   (fn [old-state new-state]
-    (conj old-state new-state)))
+    (dispatch [:save-db])
+    (assoc old-state :persist new-state)))

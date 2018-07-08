@@ -5,11 +5,16 @@
 (println "Loading db")
 
 ;; spec of app-db
-(s/def ::app-db
+(s/def ::cache
   (s/keys :req-un []))
+(s/def ::persist
+  (s/keys :req-un []))
+(s/def ::app-db
+  (s/keys :req-un [::cache ::persist]))
 
 ;; initial state of app-db
-(def app-db {})
+(def app-db {:persist {}
+             :cache   {}})
 
 (defn map->json 
   [mapping]
@@ -32,11 +37,11 @@
       AsyncStorage
       (.getItem db-key)
       (.then json->map)
-      (.then  (fn [new-state]
-                (dispatch [:store-all new-state])))))
+      (.then #(if (= %1 nil) {} %1))
+      (.then #(dispatch [:store-all %1]))))
               
   (defn save! [new-state]
     (println "saving new-state:" new-state)
     (->
     AsyncStorage
-      (.setItem "@MEPaceGADiary:db" (map->json new-state)))))
+      (.setItem "@MEPaceGADiary:db" (map->json (:persist new-state))))))
