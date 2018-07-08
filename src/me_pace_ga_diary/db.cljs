@@ -16,14 +16,14 @@
 (def app-db {:persist {}
              :cache   {}})
 
-(defn map->json 
+(defn map->json
   [mapping]
   (-> mapping
       clj->js
       js/JSON.stringify))
-  
 
-(defn json->map 
+
+(defn json->map
   [json]
   (-> json
       js/JSON.parse
@@ -31,7 +31,7 @@
 
 (let [db-key        "@MEPaceGADiary:db"
       AsyncStorage  (.-AsyncStorage (js/require "react-native"))]
-      
+
   (defn load [old-state]
     (->
       AsyncStorage
@@ -39,7 +39,7 @@
       (.then json->map)
       (.then #(if (= %1 nil) {} %1))
       (.then #(dispatch [:store-all %1]))))
-              
+
   (defn save! [new-state]
     (println "saving new-state:" new-state)
     (->

@@ -50,6 +50,19 @@
       (keyword input')
       input'))
 
+(reg-db :tick
+    (fn [old-state]
+      (let [
+            now           (.toTimeString (js/Date.))
+            parsed-time   (->> (clojure.string/split now ":")
+                               (take 2)
+                               (map int)
+                               vec)
+            ]
+            (assoc-in old-state [:cache :now] parsed-time)
+        )
+      ))
+
 (reg-db :store
   (fn [old-state key' value]
     (let [key-chain (map to-key key')]
@@ -59,4 +72,5 @@
 (reg-db :store-all
   (fn [old-state new-state]
     (dispatch [:save-db])
-    (assoc old-state :persist new-state)))
+    (merge-with merge old-state {:persist new-state})))
+

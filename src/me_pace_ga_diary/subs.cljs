@@ -6,10 +6,7 @@
           [prefix]
           (fn
             [state [_ & key-chain]]
-            (let [full  (into [prefix] key-chain)]
-              (println state prefix key-chain)
-              (get-in state full))
-            ))]
+            (get-in state (into [prefix] key-chain))))]
   (reg-sub :get-from-db     (get-from :persist))
   (reg-sub :get-from-cache  (get-from :cache)))
 

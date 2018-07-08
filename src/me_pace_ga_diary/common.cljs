@@ -16,24 +16,27 @@
 (defn do-init [app-root]
   (let [app-registry (.-AppRegistry ReactNative)]
   (dispatch-sync [:initialize-db])
+  (js/setInterval #(dispatch [:tick]) 1000)
   (dispatch [:load-db])
   (.registerComponent app-registry "MePaceGaDiary" #(r/reactify-component app-root))))
 
-(let [db          (subscribe [:get-state])
-      cache-key   (subscribe [:get-from-cache :k])
-      cache-val   (subscribe [:get-from-cache :v])
-      get-ref     (fn [parent key] ((js->clj  (.-refs parent)) key))
-      unwrap      #(-> %1 .-nativeEvent .-text)
-      store       #(dispatch [:store [%1 %2] (unwrap %3)])
-      set-cache   (partial store :cache)
-      set-db      (fn [k v]
-                    (store :persist k v)
-                    (dispatch [:save-db])
-                    )
-      to-str      #(cond
-                     (= %1 nil)   ""
-                     (string? %1) %1
-                     :else        (str %1))
+
+(let [db            (subscribe [:get-state])
+      cache-key     (subscribe [:get-from-cache :k])
+      cache-val     (subscribe [:get-from-cache :v])
+      now           (subscribe [:get-from-cache :now])
+      get-ref       (fn [parent key] ((js->clj  (.-refs parent)) key))
+      unwrap        #(-> %1 .-nativeEvent .-text)
+      store         #(dispatch [:store [%1 %2] (unwrap %3)])
+      set-cache     (partial store :cache)
+      set-db        (fn [k v]
+                      (store :persist k v)
+                      (dispatch [:save-db]))
+      to-str        #(cond
+                      (= %1 nil)   ""
+                      (string? %1) %1
+                      :else        (str %1))
+      clock-string  #(seq [%1  ":" %2])
       ]
   (defn app-root
     []
@@ -41,6 +44,7 @@
           focus-el  #(.focus ((js->clj (.-refs page)) %1))]
         [ui/view (ui/styled :view-main)
             [ui/h1 "Hai!"]
+            [ui/p  (apply clock-string @now)]
             [ui/image (ui/styled :logo
                                  :source logo-img)]
             [ui/input {:style             {:width "100%"}
