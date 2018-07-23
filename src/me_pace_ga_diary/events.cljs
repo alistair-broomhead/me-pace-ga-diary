@@ -2,8 +2,11 @@
   (:require
    [re-frame.core :refer [reg-event-db reg-event-fx inject-cofx after dispatch]]
    [clojure.spec.alpha :as s]
+   [cljs-time.local :refer [local-now]]
    [me-pace-ga-diary.db :as db :refer [app-db]]
-   [me-pace-ga-diary.ui :as ui]))
+   [me-pace-ga-diary.ui :as ui]
+   [goog.date]
+   ))
 
 (println "Loading events")
 ;; -- Interceptors ------------------------------------------------------------
@@ -51,23 +54,22 @@
       input'))
 
 (reg-db :tick
-    (fn [old-state]
-      (let [
-            now           (.toTimeString (js/Date.))
-            parsed-time   (->> (clojure.string/split now ":")
-                               (take 2)
-                               (map int)
-                               vec)
-            ]
-            (assoc-in old-state [:cache :now] parsed-time)
-        )
-      ))
+  (fn [old-state]
+    (assoc-in old-state [:cache :now] (local-now))))
 
 (reg-db :store
   (fn [old-state key' value]
     (let [key-chain (map to-key key')]
         (println "storing" key-chain value "in" old-state)
         (assoc-in old-state key-chain value))))
+
+(reg-db :enter-info
+  (fn [old-state entry]
+    (let [now   (-> old-state :cache :now)
+
+          ]
+
+      )))
 
 (reg-db :store-all
   (fn [old-state new-state]
